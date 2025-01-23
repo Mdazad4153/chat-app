@@ -11,8 +11,8 @@ socketio = SocketIO(app)
 
 # User credentials
 VALID_CREDENTIALS = {
-    'Abhi': '1234',
-    'Sanya': '5678'
+    'Abhi': '415341',
+    'Sanya': '841401'
 }
 
 # Initialize database
