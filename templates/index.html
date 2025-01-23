@@ -83,15 +83,29 @@
         .user-status {
             font-size: 14px;
             opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .online-dot {
             width: 8px;
             height: 8px;
-            background: #25D366;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 5px;
+        }
+
+        .online-dot.online {
+            background: #25D366;
+        }
+
+        .online-dot.offline {
+            background: #888;
+        }
+
+        .last-seen {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .chat-body {
@@ -332,10 +346,11 @@
                     <i class="fas fa-user"></i>
                 </div>
                 <div>
-                    <h3>{% if session['username'] == 'Abhi' %}Sanya{% else %}Abhi{% endif %}</h3>
+                    <h3 id="chat-partner">Chat Partner</h3>
                     <div class="user-status">
                         <span class="online-dot"></span>
-                        Online
+                        <span id="status-text">Offline</span>
+                        <span id="last-seen" class="last-seen"></span>
                     </div>
                 </div>
             </div>
@@ -380,9 +395,73 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         var socket = io();
-        var typingTimeout = null;
+        var messageInput = document.getElementById('message');
+        var chatBody = document.querySelector('.chat-body');
         var lastMessageTime = null;
         var replyingTo = null;
+        var chatPartner = '{{ "Sanya" if session["username"] == "Abhi" else "Abhi" }}';
+        
+        // Update chat partner name
+        document.getElementById('chat-partner').textContent = chatPartner;
+
+        // Function to format last seen time
+        function formatLastSeen(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000); // difference in seconds
+            
+            if (diff < 60) return 'last seen just now';
+            if (diff < 3600) return `last seen ${Math.floor(diff/60)} minutes ago`;
+            if (diff < 86400) return `last seen ${Math.floor(diff/3600)} hours ago`;
+            return `last seen ${date.toLocaleDateString()}`;
+        }
+
+        // Function to update user status
+        function updateUserStatus() {
+            fetch(`/get_user_status/${chatPartner}`)
+                .then(response => response.json())
+                .then(data => {
+                    const dot = document.querySelector('.online-dot');
+                    const statusText = document.getElementById('status-text');
+                    const lastSeen = document.getElementById('last-seen');
+                    
+                    if (data.status === 'online') {
+                        dot.className = 'online-dot online';
+                        statusText.textContent = 'Online';
+                        lastSeen.textContent = '';
+                    } else {
+                        dot.className = 'online-dot offline';
+                        statusText.textContent = 'Offline';
+                        lastSeen.textContent = formatLastSeen(data.last_seen);
+                    }
+                });
+        }
+
+        // Update status every 30 seconds
+        setInterval(updateUserStatus, 30000);
+        
+        // Update status when receiving status events
+        socket.on('user_status', function(data) {
+            if (data.username === chatPartner) {
+                const dot = document.querySelector('.online-dot');
+                const statusText = document.getElementById('status-text');
+                const lastSeen = document.getElementById('last-seen');
+                
+                if (data.status === 'online') {
+                    dot.className = 'online-dot online';
+                    statusText.textContent = 'Online';
+                    lastSeen.textContent = '';
+                } else {
+                    dot.className = 'online-dot offline';
+                    statusText.textContent = 'Offline';
+                    lastSeen.textContent = formatLastSeen(data.last_seen);
+                }
+            }
+        });
+
+        // Initial status check
+        updateUserStatus();
 
         function adjustViewportHeight() {
             let vh = window.innerHeight * 0.01;
@@ -397,24 +476,10 @@
         window.addEventListener('orientationchange', adjustViewportHeight);
 
         // Handle keyboard events
-        window.visualViewport.addEventListener('resize', function() {
-            const chatBody = document.querySelector('.chat-body');
-            const chatFooter = document.querySelector('.chat-footer');
-            
-            // Adjust the chat body padding when keyboard is open
-            if (window.visualViewport.height < window.innerHeight) {
-                // Keyboard is open
-                chatBody.style.paddingBottom = '120px';
-                chatFooter.style.bottom = `${window.innerHeight - window.visualViewport.height}px`;
-            } else {
-                // Keyboard is closed
-                chatBody.style.paddingBottom = '60px';
-                chatFooter.style.bottom = '0';
-            }
-            
-            // Scroll to bottom when keyboard opens
-            scrollToBottom();
-        });
+        window.visualViewport.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.chat-body')) return;
+            e.preventDefault();
+        }, { passive: false });
 
         // Load chat history when page loads
         window.onload = function() {

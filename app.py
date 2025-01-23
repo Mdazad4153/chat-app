@@ -15,6 +15,10 @@ USERS = {
     'Sanya': '841401'
 }
 
+# Track online users and their last seen
+online_users = {}
+last_seen = {}
+
 # Initialize database
 def init_db():
     conn = sqlite3.connect('chat.db')
@@ -26,10 +30,25 @@ def init_db():
                   content TEXT NOT NULL,
                   timestamp TEXT NOT NULL,
                   is_read INTEGER DEFAULT 0)''')
+    
+    # Add last_seen table
+    c.execute('''CREATE TABLE IF NOT EXISTS last_seen
+                 (username TEXT PRIMARY KEY,
+                  timestamp TEXT NOT NULL)''')
     conn.commit()
     conn.close()
 
 init_db()
+
+def update_last_seen(username):
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    c.execute('INSERT OR REPLACE INTO last_seen (username, timestamp) VALUES (?, ?)',
+              (username, timestamp))
+    conn.commit()
+    conn.close()
+    last_seen[username] = timestamp
 
 @app.route('/')
 def home():
@@ -113,19 +132,50 @@ def get_chat_history():
     conn.close()
     return jsonify(messages)
 
+@app.route('/get_user_status/<username>')
+def get_user_status(username):
+    if username in online_users:
+        return jsonify({'status': 'online'})
+    
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    c.execute('SELECT timestamp FROM last_seen WHERE username = ?', (username,))
+    result = c.fetchone()
+    conn.close()
+    
+    if result:
+        return jsonify({'status': 'offline', 'last_seen': result[0]})
+    return jsonify({'status': 'offline', 'last_seen': None})
+
 @socketio.on('connect')
 def handle_connect():
     if 'username' in session:
+        username = session['username']
+        online_users[username] = request.sid
+        update_last_seen(username)
+        emit('user_status', {
+            'username': username,
+            'status': 'online'
+        }, broadcast=True)
         emit('message', {
-            'msg': f"{session['username']} joined the chat",
+            'msg': f"{username} joined the chat",
             'system': True
         }, broadcast=True)
 
 @socketio.on('disconnect')
 def handle_disconnect():
     if 'username' in session:
+        username = session['username']
+        if username in online_users:
+            del online_users[username]
+        update_last_seen(username)
+        emit('user_status', {
+            'username': username,
+            'status': 'offline',
+            'last_seen': last_seen.get(username)
+        }, broadcast=True)
         emit('message', {
-            'msg': f"{session['username']} left the chat",
+            'msg': f"{username} left the chat",
             'system': True
         }, broadcast=True)
 
