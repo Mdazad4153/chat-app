@@ -45,6 +45,7 @@
             left: 0;
             right: 0;
             bottom: 0;
+            animation: fadeIn 0.5s ease-out;
         }
 
         .chat-header {
@@ -57,6 +58,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             min-height: 60px;
             z-index: 1000;
+            animation: slideIn 0.5s ease-out;
         }
 
         .user-info {
@@ -76,6 +78,12 @@
             font-size: 20px;
             color: var(--primary-color);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0,168,132,0.3);
         }
 
         .user-details {
@@ -100,23 +108,28 @@
             background-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="%23f0f0f0" opacity="0.1"/></svg>');
             -webkit-overflow-scrolling: touch;
             scroll-behavior: smooth;
-            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .chat-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.2);
         }
 
         .message {
             margin-bottom: 8px;
             max-width: 80%;
             position: relative;
-            animation: slideUp 0.3s ease-out;
-            transform-origin: bottom;
+            animation: messageAppear 0.3s ease-out;
         }
 
         .message.sent {
             margin-left: auto;
+            animation: slideInRight 0.3s ease-out;
         }
 
         .message.received {
             margin-right: auto;
+            animation: slideIn 0.3s ease-out;
         }
 
         .message-content {
@@ -127,6 +140,7 @@
             font-size: 0.95em;
             line-height: 1.4;
             box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
+            transition: all 0.3s ease;
         }
 
         .sent .message-content {
@@ -137,6 +151,11 @@
         .received .message-content {
             background: var(--message-received);
             border-top-left-radius: 4px;
+        }
+
+        .message-content:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .message-time {
@@ -169,12 +188,13 @@
             background: white;
             font-size: 0.95em;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: box-shadow 0.2s;
+            transition: all 0.3s ease;
         }
 
         .message-input:focus {
             outline: none;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
         }
 
         .send-button {
@@ -188,8 +208,13 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0,168,132,0.3);
         }
 
         .send-button:active {
@@ -204,23 +229,48 @@
             cursor: pointer;
             color: #666;
             font-size: 1.4em;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
         }
 
-        .emoji-button:active {
-            transform: scale(0.95);
+        .emoji-button:hover {
+            transform: rotate(10deg) scale(1.1);
+            color: var(--primary-color);
         }
 
         .typing-indicator {
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 16px;
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 8px;
-            display: inline-block;
-            animation: fadeIn 0.3s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            display: none;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+
+        .typing-dot:nth-child(1) { animation: typing 1s infinite 0s; }
+        .typing-dot:nth-child(2) { animation: typing 1s infinite 0.2s; }
+        .typing-dot:nth-child(3) { animation: typing 1s infinite 0.4s; }
+
+        .online-dot {
+            animation: pulseGlow 2s infinite;
+        }
+
+        .message-status {
+            transition: all 0.3s ease;
+        }
+
+        .message-status i {
+            transition: all 0.3s ease;
+        }
+
+        .message-status i.read {
+            color: var(--primary-color);
+            animation: bounce 0.5s ease;
         }
 
         @keyframes messageAppear {
@@ -237,6 +287,45 @@
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 5px rgba(0,168,132,0.2); }
+            50% { box-shadow: 0 0 15px rgba(0,168,132,0.4); }
+            100% { box-shadow: 0 0 5px rgba(0,168,132,0.2); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes typing {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
         }
 
         /* Message status indicators */
@@ -293,192 +382,6 @@
                 padding: 10px 14px;
             }
         }
-
-        /* Reply styles */
-        .reply-preview {
-            position: absolute;
-            bottom: 100%;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 8px 16px;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            display: none;
-            animation: slideDown 0.3s ease-out;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .reply-preview.active {
-            display: block;
-        }
-
-        .reply-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .reply-text {
-            flex: 1;
-            font-size: 0.9em;
-            color: #666;
-            border-left: 3px solid var(--primary-color);
-            padding-left: 8px;
-            margin: 4px 0;
-            opacity: 0.9;
-        }
-
-        .reply-sender {
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 2px;
-            font-size: 0.85em;
-        }
-
-        .close-reply {
-            background: none;
-            border: none;
-            color: #999;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: all 0.2s;
-        }
-
-        .close-reply:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: #666;
-        }
-
-        /* Enhanced animations */
-        @keyframes slideDown {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .message.highlight {
-            animation: pulse 0.5s ease-in-out;
-            background: rgba(0, 168, 132, 0.1);
-            border-radius: 12px;
-        }
-
-        .message.with-reply .message-content {
-            margin-top: 4px;
-        }
-
-        .message .replied-to {
-            font-size: 0.85em;
-            background: rgba(0, 0, 0, 0.04);
-            padding: 4px 8px;
-            border-radius: 6px;
-            margin-bottom: 4px;
-            border-left: 3px solid var(--primary-color);
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .message .replied-to:hover {
-            background: rgba(0, 0, 0, 0.06);
-        }
-
-        .message .replied-to-text {
-            color: #666;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-
-        .message .replied-to-sender {
-            color: var(--primary-color);
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .message-actions {
-            position: absolute;
-            right: -10px;
-            top: -20px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: none;
-            animation: fadeIn 0.2s;
-            z-index: 100;
-        }
-
-        .message:hover .message-actions {
-            display: flex;
-        }
-
-        .message-action-button {
-            background: none;
-            border: none;
-            padding: 8px;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-radius: 50%;
-        }
-
-        .message-action-button:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--primary-color);
-        }
-
-        /* Add these to your existing styles */
-        .scroll-to-bottom {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            background: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            cursor: pointer;
-            display: none;
-            animation: fadeIn 0.3s;
-            z-index: 1000;
-            color: var(--primary-color);
-            transition: all 0.2s;
-        }
-
-        .scroll-to-bottom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .scroll-to-bottom.visible {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
     </style>
 </head>
 <body>
@@ -513,22 +416,19 @@
             <!-- Messages will be added here -->
         </div>
 
-        <button id="scrollToBottom" class="scroll-to-bottom">
-            <i class="fas fa-chevron-down"></i>
-        </button>
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <span class="typing-text">typing</span>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+
+        <div class="reply-preview" id="replyPreview">
+            <button class="close-reply" onclick="cancelReply()">×</button>
+            <div class="reply-content"></div>
+        </div>
 
         <div class="chat-footer">
-            <div class="reply-preview" id="replyPreview">
-                <div class="reply-content">
-                    <div class="reply-info">
-                        <div class="reply-sender" id="replySender"></div>
-                        <div class="reply-text" id="replyText"></div>
-                    </div>
-                    <button class="close-reply" onclick="cancelReply()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
             <button class="emoji-button" onclick="toggleEmoji()">
                 <i class="far fa-smile"></i>
             </button>
@@ -628,112 +528,83 @@
         }
 
         function replyToMessage(messageId, content, sender) {
-            const replyPreview = document.getElementById('replyPreview');
-            const replySender = document.getElementById('replySender');
-            const replyText = document.getElementById('replyText');
-            
-            replyPreview.classList.add('active');
-            replySender.textContent = sender;
-            replyText.textContent = content;
-            
-            // Store reply information
-            window.replyingTo = {
-                messageId: messageId,
+            replyingTo = {
+                id: messageId,
                 content: content,
                 sender: sender
             };
             
-            // Focus input field
+            const replyPreview = document.getElementById('replyPreview');
+            const replyContent = replyPreview.querySelector('.reply-content');
+            replyContent.textContent = `Replying to ${sender}: ${content}`;
+            replyPreview.classList.add('active');
+            
             document.getElementById('message').focus();
         }
 
         function cancelReply() {
+            replyingTo = null;
             const replyPreview = document.getElementById('replyPreview');
             replyPreview.classList.remove('active');
-            window.replyingTo = null;
         }
 
-        // Enhanced message display
         function displayMessage(data) {
-            const messages = document.getElementById('chat-body');
-            const messageDiv = document.createElement('div');
-            const isSent = data.username === '{{ session["username"] }}';
+            var messages = document.getElementById('chat-body');
+            var messageDiv = document.createElement('div');
             
-            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-            if (data.replyTo) {
-                messageDiv.classList.add('with-reply');
-            }
-            
-            let messageHTML = '';
-            
-            // Add reply content if present
-            if (data.replyTo) {
-                messageHTML += `
-                    <div class="replied-to" onclick="highlightOriginalMessage('${data.replyTo.messageId}')">
-                        <div class="replied-to-sender">${data.replyTo.sender}</div>
-                        <div class="replied-to-text">${data.replyTo.content}</div>
+            if (data.system) {
+                messageDiv.className = 'system-message';
+                messageDiv.textContent = data.msg;
+            } else {
+                messageDiv.className = `message ${data.username === '{{ session["username"] }}' ? 'sent' : 'received'}`;
+                messageDiv.setAttribute('data-message-id', data.id || Date.now());
+                
+                let messageContent = `
+                    <div class="message-content">
+                        ${data.msg}
+                        <div class="message-time">${data.timestamp || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div class="message-status">
+                            <i class="fas fa-check${data.username === '{{ session["username"] }}' ? ' read' : ''}" style="color: ${data.username === '{{ session["username"] }}' ? 'var(--primary-color)' : '#888'}"></i>
+                        </div>
                     </div>
                 `;
+                
+                messageDiv.innerHTML = messageContent;
+                messages.appendChild(messageDiv);
+                
+                // Smooth scroll to new message
+                setTimeout(() => {
+                    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                }, 100);
+
+                // Add hover effect for message actions
+                messageDiv.addEventListener('mouseenter', () => {
+                    messageDiv.style.transform = 'translateY(-2px)';
+                });
+                
+                messageDiv.addEventListener('mouseleave', () => {
+                    messageDiv.style.transform = 'translateY(0)';
+                });
             }
-            
-            messageHTML += `
-                <div class="message-content">
-                    ${data.msg}
-                    <div class="message-time">${data.timestamp}</div>
-                </div>
-                <div class="message-actions">
-                    <button class="message-action-button" onclick="replyToMessage('${data.id}', '${data.msg}', '${data.username}')">
-                        <i class="fas fa-reply"></i>
-                    </button>
-                </div>
-            `;
-            
-            messageDiv.innerHTML = messageHTML;
-            messages.appendChild(messageDiv);
-            scrollToBottom();
         }
 
-        // Scroll to bottom functionality
-        const scrollToBottomBtn = document.getElementById('scrollToBottom');
-        const chatBody = document.getElementById('chat-body');
-
-        chatBody.addEventListener('scroll', () => {
-            const isNearBottom = chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight < 100;
-            scrollToBottomBtn.classList.toggle('visible', !isNearBottom);
-        });
-
-        scrollToBottomBtn.addEventListener('click', () => {
-            smoothScrollToBottom();
-        });
-
-        function smoothScrollToBottom() {
-            const chatBody = document.getElementById('chat-body');
-            chatBody.scrollTo({
-                top: chatBody.scrollHeight,
-                behavior: 'smooth'
+        function highlightOriginalMessage(messageId) {
+            // Remove highlight from all messages
+            document.querySelectorAll('.message.highlight').forEach(msg => {
+                msg.classList.remove('highlight');
             });
+
+            // Find and highlight the original message
+            const originalMessage = document.querySelector(`.message[data-message-id="${messageId}"]`);
+            if (originalMessage) {
+                originalMessage.classList.add('highlight');
+                originalMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
-        // Enhanced message sending
-        function sendMessage() {
-            const messageInput = document.getElementById('message');
-            const message = messageInput.value.trim();
-            
-            if (message) {
-                const messageData = {
-                    msg: message,
-                    id: Date.now().toString()
-                };
-                
-                // Add reply information if replying
-                if (window.replyingTo) {
-                    messageData.replyTo = window.replyingTo;
-                    cancelReply();
-                }
-                
-                socket.emit('message', messageData);
-                messageInput.value = '';
-            }
+        function scrollToBottom() {
+            const messages = document.getElementById('chat-body');
+            messages.scrollTop = messages.scrollHeight;
         }
 
         document.getElementById('message').addEventListener('keypress', function(e) {
@@ -759,9 +630,10 @@
         socket.on('typing', function(data) {
             if (data.username !== '{{ session["username"] }}') {
                 const typingIndicator = document.getElementById('typingIndicator');
-                const usernameSpan = typingIndicator.querySelector('.typing-username');
-                usernameSpan.textContent = `${data.username} is typing`;
-                typingIndicator.style.display = 'block';
+                typingIndicator.style.display = 'flex';
+                setTimeout(() => {
+                    typingIndicator.style.display = 'none';
+                }, 3000);
             }
         });
 
@@ -827,6 +699,25 @@
             event.preventDefault();
             event.target.click();
         }, false);
+
+        // Add animation when sending message
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const sendButton = document.querySelector('.send-button');
+            
+            if (messageInput.value.trim()) {
+                sendButton.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    sendButton.style.transform = 'scale(1)';
+                }, 200);
+                
+                socket.emit('message', {
+                    msg: messageInput.value
+                });
+                
+                messageInput.value = '';
+            }
+        }
     </script>
 </body>
 </html>
