@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit
+from functools import wraps
 from datetime import datetime
 import os
 import sqlite3
@@ -10,10 +11,18 @@ app.config['SECRET_KEY'] = os.urandom(24)
 socketio = SocketIO(app)
 
 # User credentials
-VALID_CREDENTIALS = {
+USERS = {
     'Abhi': '415341',
     'Sanya': '841401'
 }
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Initialize database
 def init_db():
@@ -32,28 +41,23 @@ def init_db():
 init_db()
 
 @app.route('/')
-def home():
-    if 'username' not in session:
-        return redirect(url_for('login'))
+@login_required
+def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = request.form['username']
+        password = request.form['password']
         
-        if username in VALID_CREDENTIALS and VALID_CREDENTIALS[username] == password:
+        if username in USERS and USERS[username] == password:
             session['username'] = username
-            return jsonify({'success': True})
-        return jsonify({'success': False})
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error='Invalid credentials')
+    
     return render_template('login.html')
-
-@app.route('/chat')
-def chat():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    return render_template('index.html')
 
 @app.route('/logout')
 def logout():
@@ -117,17 +121,6 @@ def get_chat_history():
     conn.close()
     return jsonify(messages)
 
-@app.route('/set_username', methods=['POST'])
-def set_username():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    
-    if username and password:
-        if username in VALID_CREDENTIALS and VALID_CREDENTIALS[username] == password:
-            session['username'] = username
-            return jsonify({'success': True})
-    return jsonify({'success': False})
-
 @socketio.on('connect')
 def handle_connect():
     if 'username' in session:
@@ -156,13 +149,13 @@ def handle_message(data):
         c = conn.cursor()
         c.execute('''INSERT INTO messages (sender, receiver, content, timestamp)
                      VALUES (?, ?, ?, ?)''', 
-                  (sender, receiver, data['msg'], timestamp))
+                  (sender, receiver, data['message'], timestamp))
         conn.commit()
         conn.close()
         
         # Prepare message data
         message_data = {
-            'msg': data['msg'],
+            'message': data['message'],
             'username': sender,
             'timestamp': datetime.now().strftime('%H:%M'),
             'id': data.get('id', str(int(datetime.now().timestamp() * 1000)))  # Use provided ID or generate one
