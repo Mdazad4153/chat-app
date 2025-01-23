@@ -728,29 +728,7 @@
     <!-- Chat Interface -->
     <div class="chat-container" id="chatContainer" style="display: none;">
         <div class="chat-header">
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="user-details">
-                    <div class="user-name">{% if session['username'] == 'Abhi' %}Sanya{% else %}Abhi{% endif %}</div>
-                    <div class="user-status">
-                        <span class="online-dot"></span>
-                        Online
-                    </div>
-                </div>
-            </div>
-            <div class="chat-buttons">
-                <div class="current-user">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <span>{{ session['username'] }}</span>
-                </div>
-                <a href="/logout" style="color: white; text-decoration: none; margin-left: 10px;">
-                    <i class="fas fa-sign-out-alt"></i>
-                </a>
-            </div>
+            <h2>Chat Room</h2>
         </div>
 
         <div class="chat-body" id="chat-body">
@@ -861,8 +839,6 @@
                             setTimeout(() => {
                                 chatContainer.classList.add('visible');
                             }, 50);
-                            // Update username in chat header
-                            document.querySelector('.username').textContent = selectedUser;
                             // Initialize socket
                             initializeSocket();
                         }, 600);
