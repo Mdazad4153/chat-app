@@ -46,36 +46,8 @@
 
         .user-info {
             display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-
-        .user-name {
-            display: flex;
             align-items: center;
-        }
-
-        .user-status {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 2px;
-        }
-
-        .online-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-            vertical-align: middle;
-        }
-
-        .online-dot.online {
-            background: #25D366;
-        }
-
-        .online-dot.offline {
-            background: #bbb;
+            flex: 1;
         }
 
         .current-user {
@@ -106,6 +78,20 @@
             justify-content: center;
             font-size: 20px;
             color: #128C7E;
+        }
+
+        .user-status {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #25D366;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
         }
 
         .chat-body {
@@ -342,11 +328,16 @@
     <div class="chat-container">
         <div class="chat-header">
             <div class="user-info">
-                <div class="user-name">
-                    <span class="online-dot offline" id="status-dot"></span>
-                    <span id="chat-with">Loading...</span>
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
                 </div>
-                <div class="user-status" id="last-seen">Last seen: ...</div>
+                <div>
+                    <h3>{% if session['username'] == 'Abhi' %}Sanya{% else %}Abhi{% endif %}</h3>
+                    <div class="user-status">
+                        <span class="online-dot"></span>
+                        Online
+                    </div>
+                </div>
             </div>
             <div class="chat-buttons">
                 <div class="current-user">
@@ -392,7 +383,6 @@
         var typingTimeout = null;
         var lastMessageTime = null;
         var replyingTo = null;
-        var otherUser = '{{ "Sanya" if session.username == "Abhi" else "Abhi" }}';
 
         function adjustViewportHeight() {
             let vh = window.innerHeight * 0.01;
@@ -581,52 +571,6 @@
             const messages = document.getElementById('messages');
             messages.scrollTop = messages.scrollHeight;
         }
-
-        function updateUserStatus(data) {
-            const statusDot = document.getElementById('status-dot');
-            const lastSeen = document.getElementById('last-seen');
-            
-            if (data.username === otherUser) {
-                statusDot.className = `online-dot ${data.status}`;
-                if (data.status === 'online') {
-                    lastSeen.textContent = 'Online';
-                } else {
-                    const lastSeenTime = new Date(data.last_seen);
-                    const now = new Date();
-                    const diffMinutes = Math.floor((now - lastSeenTime) / 60000);
-                    
-                    if (diffMinutes < 1) {
-                        lastSeen.textContent = 'Last seen: just now';
-                    } else if (diffMinutes < 60) {
-                        lastSeen.textContent = `Last seen: ${diffMinutes} minutes ago`;
-                    } else if (diffMinutes < 1440) {
-                        const hours = Math.floor(diffMinutes / 60);
-                        lastSeen.textContent = `Last seen: ${hours} hours ago`;
-                    } else {
-                        lastSeen.textContent = `Last seen: ${lastSeenTime.toLocaleDateString()}`;
-                    }
-                }
-            }
-        }
-
-        // Update chat header with other user's name
-        document.getElementById('chat-with').textContent = otherUser;
-
-        // Listen for user status updates
-        socket.on('user_status', function(data) {
-            updateUserStatus(data);
-        });
-
-        // Get initial user status
-        fetch(`/get_user_status/${otherUser}`)
-            .then(response => response.json())
-            .then(data => {
-                updateUserStatus({
-                    username: otherUser,
-                    status: data.is_online ? 'online' : 'offline',
-                    last_seen: data.last_seen
-                });
-            });
 
         document.getElementById('message').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {

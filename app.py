@@ -15,10 +15,6 @@ USERS = {
     'Sanya': '841401'
 }
 
-# Track online users and their last seen
-online_users = {}
-user_last_seen = {}
-
 # Initialize database
 def init_db():
     conn = sqlite3.connect('chat.db')
@@ -30,12 +26,6 @@ def init_db():
                   content TEXT NOT NULL,
                   timestamp TEXT NOT NULL,
                   is_read INTEGER DEFAULT 0)''')
-    
-    # Add user_status table
-    c.execute('''CREATE TABLE IF NOT EXISTS user_status
-                 (username TEXT PRIMARY KEY,
-                  last_seen TEXT NOT NULL,
-                  is_online INTEGER DEFAULT 0)''')
     conn.commit()
     conn.close()
 
@@ -123,46 +113,20 @@ def get_chat_history():
     conn.close()
     return jsonify(messages)
 
-@app.route('/get_user_status/<username>')
-def get_user_status(username):
-    if username not in USERS:
-        return jsonify({'error': 'User not found'}), 404
-    
-    is_online = username in online_users
-    last_seen = user_last_seen.get(username, 'Never')
-    
-    return jsonify({
-        'is_online': is_online,
-        'last_seen': last_seen
-    })
-
 @socketio.on('connect')
 def handle_connect():
     if 'username' in session:
-        username = session['username']
-        online_users[username] = request.sid
-        user_last_seen[username] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Broadcast user online status to all clients
-        emit('user_status', {
-            'username': username,
-            'status': 'online',
-            'last_seen': user_last_seen[username]
+        emit('message', {
+            'msg': f"{session['username']} joined the chat",
+            'system': True
         }, broadcast=True)
 
 @socketio.on('disconnect')
 def handle_disconnect():
     if 'username' in session:
-        username = session['username']
-        if username in online_users:
-            del online_users[username]
-        user_last_seen[username] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Broadcast user offline status to all clients
-        emit('user_status', {
-            'username': username,
-            'status': 'offline',
-            'last_seen': user_last_seen[username]
+        emit('message', {
+            'msg': f"{session['username']} left the chat",
+            'system': True
         }, broadcast=True)
 
 @socketio.on('message')
