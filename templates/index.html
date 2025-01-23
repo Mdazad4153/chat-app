@@ -100,13 +100,15 @@
             background-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="%23f0f0f0" opacity="0.1"/></svg>');
             -webkit-overflow-scrolling: touch;
             scroll-behavior: smooth;
+            position: relative;
         }
 
         .message {
             margin-bottom: 8px;
             max-width: 80%;
             position: relative;
-            animation: messageAppear 0.3s ease-out;
+            animation: slideUp 0.3s ease-out;
+            transform-origin: bottom;
         }
 
         .message.sent {
@@ -291,6 +293,192 @@
                 padding: 10px 14px;
             }
         }
+
+        /* Reply styles */
+        .reply-preview {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            display: none;
+            animation: slideDown 0.3s ease-out;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .reply-preview.active {
+            display: block;
+        }
+
+        .reply-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .reply-text {
+            flex: 1;
+            font-size: 0.9em;
+            color: #666;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 8px;
+            margin: 4px 0;
+            opacity: 0.9;
+        }
+
+        .reply-sender {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 2px;
+            font-size: 0.85em;
+        }
+
+        .close-reply {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .close-reply:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #666;
+        }
+
+        /* Enhanced animations */
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .message.highlight {
+            animation: pulse 0.5s ease-in-out;
+            background: rgba(0, 168, 132, 0.1);
+            border-radius: 12px;
+        }
+
+        .message.with-reply .message-content {
+            margin-top: 4px;
+        }
+
+        .message .replied-to {
+            font-size: 0.85em;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            border-left: 3px solid var(--primary-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .message .replied-to:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+
+        .message .replied-to-text {
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .message .replied-to-sender {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .message-actions {
+            position: absolute;
+            right: -10px;
+            top: -20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            animation: fadeIn 0.2s;
+            z-index: 100;
+        }
+
+        .message:hover .message-actions {
+            display: flex;
+        }
+
+        .message-action-button {
+            background: none;
+            border: none;
+            padding: 8px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 50%;
+        }
+
+        .message-action-button:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--primary-color);
+        }
+
+        /* Add these to your existing styles */
+        .scroll-to-bottom {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: none;
+            animation: fadeIn 0.3s;
+            z-index: 1000;
+            color: var(--primary-color);
+            transition: all 0.2s;
+        }
+
+        .scroll-to-bottom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .scroll-to-bottom.visible {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -321,21 +509,26 @@
             </div>
         </div>
 
-        <div class="chat-body" id="messages">
+        <div class="chat-body" id="chat-body">
             <!-- Messages will be added here -->
         </div>
 
-        <div id="typingIndicator">
-            <span class="typing-username"></span>
-            <span class="typing-dots"></span>
-        </div>
-
-        <div class="reply-preview" id="replyPreview">
-            <button class="close-reply" onclick="cancelReply()">×</button>
-            <div class="reply-content"></div>
-        </div>
+        <button id="scrollToBottom" class="scroll-to-bottom">
+            <i class="fas fa-chevron-down"></i>
+        </button>
 
         <div class="chat-footer">
+            <div class="reply-preview" id="replyPreview">
+                <div class="reply-content">
+                    <div class="reply-info">
+                        <div class="reply-sender" id="replySender"></div>
+                        <div class="reply-text" id="replyText"></div>
+                    </div>
+                    <button class="close-reply" onclick="cancelReply()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
             <button class="emoji-button" onclick="toggleEmoji()">
                 <i class="far fa-smile"></i>
             </button>
@@ -410,7 +603,7 @@
                         const notification = document.createElement('div');
                         notification.className = 'system-message';
                         notification.textContent = `You have ${messages.length} unread message(s)`;
-                        document.getElementById('messages').appendChild(notification);
+                        document.getElementById('chat-body').appendChild(notification);
                         
                         messages.forEach(data => {
                             displayMessage(data);
@@ -435,110 +628,112 @@
         }
 
         function replyToMessage(messageId, content, sender) {
-            replyingTo = {
-                id: messageId,
+            const replyPreview = document.getElementById('replyPreview');
+            const replySender = document.getElementById('replySender');
+            const replyText = document.getElementById('replyText');
+            
+            replyPreview.classList.add('active');
+            replySender.textContent = sender;
+            replyText.textContent = content;
+            
+            // Store reply information
+            window.replyingTo = {
+                messageId: messageId,
                 content: content,
                 sender: sender
             };
             
-            const replyPreview = document.getElementById('replyPreview');
-            const replyContent = replyPreview.querySelector('.reply-content');
-            replyContent.textContent = `Replying to ${sender}: ${content}`;
-            replyPreview.classList.add('active');
-            
+            // Focus input field
             document.getElementById('message').focus();
         }
 
         function cancelReply() {
-            replyingTo = null;
             const replyPreview = document.getElementById('replyPreview');
             replyPreview.classList.remove('active');
+            window.replyingTo = null;
         }
 
+        // Enhanced message display
         function displayMessage(data) {
-            var messages = document.getElementById('messages');
-            var messageDiv = document.createElement('div');
+            const messages = document.getElementById('chat-body');
+            const messageDiv = document.createElement('div');
+            const isSent = data.username === '{{ session["username"] }}';
             
-            if (data.system) {
-                messageDiv.className = 'system-message';
-                messageDiv.textContent = data.msg;
-            } else {
-                messageDiv.className = 'message ' + 
-                    (data.username === '{{ session["username"] }}' ? 'sent' : 'received');
-                messageDiv.setAttribute('data-message-id', data.id || Date.now());
-                
-                var content = document.createElement('div');
-                content.className = 'message-content';
-                
-                if (data.replyTo) {
-                    var replyBox = document.createElement('div');
-                    replyBox.className = 'reply-box';
-                    replyBox.textContent = `${data.replyTo.sender}: ${data.replyTo.content}`;
-                    replyBox.onclick = function() {
-                        highlightOriginalMessage(data.replyTo.id);
-                    };
-                    content.appendChild(replyBox);
-                }
-
-                var username = document.createElement('div');
-                username.className = 'username';
-                username.textContent = data.username;
-                
-                var text = document.createElement('div');
-                text.textContent = data.msg;
-                
-                var time = document.createElement('div');
-                time.className = 'message-time';
-                time.textContent = data.timestamp || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                var actions = document.createElement('div');
-                actions.className = 'message-actions';
-                actions.innerHTML = `
-                    <button onclick="replyToMessage('${data.id || Date.now()}', '${data.msg}', '${data.username}')">
-                        <i class="fas fa-reply"></i> Reply
-                    </button>
-                `;
-                
-                content.appendChild(username);
-                content.appendChild(text);
-                content.appendChild(time);
-                messageDiv.appendChild(content);
-                messageDiv.appendChild(actions);
-
-                if (lastMessageTime) {
-                    const currentDate = new Date().toLocaleDateString();
-                    const lastDate = new Date(lastMessageTime).toLocaleDateString();
-                    if (currentDate !== lastDate) {
-                        const dateSeparator = document.createElement('div');
-                        dateSeparator.className = 'date-separator';
-                        dateSeparator.textContent = currentDate;
-                        messages.appendChild(dateSeparator);
-                    }
-                }
-                lastMessageTime = new Date();
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            if (data.replyTo) {
+                messageDiv.classList.add('with-reply');
             }
             
+            let messageHTML = '';
+            
+            // Add reply content if present
+            if (data.replyTo) {
+                messageHTML += `
+                    <div class="replied-to" onclick="highlightOriginalMessage('${data.replyTo.messageId}')">
+                        <div class="replied-to-sender">${data.replyTo.sender}</div>
+                        <div class="replied-to-text">${data.replyTo.content}</div>
+                    </div>
+                `;
+            }
+            
+            messageHTML += `
+                <div class="message-content">
+                    ${data.msg}
+                    <div class="message-time">${data.timestamp}</div>
+                </div>
+                <div class="message-actions">
+                    <button class="message-action-button" onclick="replyToMessage('${data.id}', '${data.msg}', '${data.username}')">
+                        <i class="fas fa-reply"></i>
+                    </button>
+                </div>
+            `;
+            
+            messageDiv.innerHTML = messageHTML;
             messages.appendChild(messageDiv);
             scrollToBottom();
         }
 
-        function highlightOriginalMessage(messageId) {
-            // Remove highlight from all messages
-            document.querySelectorAll('.message.highlight').forEach(msg => {
-                msg.classList.remove('highlight');
-            });
+        // Scroll to bottom functionality
+        const scrollToBottomBtn = document.getElementById('scrollToBottom');
+        const chatBody = document.getElementById('chat-body');
 
-            // Find and highlight the original message
-            const originalMessage = document.querySelector(`.message[data-message-id="${messageId}"]`);
-            if (originalMessage) {
-                originalMessage.classList.add('highlight');
-                originalMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+        chatBody.addEventListener('scroll', () => {
+            const isNearBottom = chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight < 100;
+            scrollToBottomBtn.classList.toggle('visible', !isNearBottom);
+        });
+
+        scrollToBottomBtn.addEventListener('click', () => {
+            smoothScrollToBottom();
+        });
+
+        function smoothScrollToBottom() {
+            const chatBody = document.getElementById('chat-body');
+            chatBody.scrollTo({
+                top: chatBody.scrollHeight,
+                behavior: 'smooth'
+            });
         }
 
-        function scrollToBottom() {
-            const messages = document.getElementById('messages');
-            messages.scrollTop = messages.scrollHeight;
+        // Enhanced message sending
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                const messageData = {
+                    msg: message,
+                    id: Date.now().toString()
+                };
+                
+                // Add reply information if replying
+                if (window.replyingTo) {
+                    messageData.replyTo = window.replyingTo;
+                    cancelReply();
+                }
+                
+                socket.emit('message', messageData);
+                messageInput.value = '';
+            }
         }
 
         document.getElementById('message').addEventListener('keypress', function(e) {
