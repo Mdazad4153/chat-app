@@ -14,6 +14,7 @@
 
         body {
             height: 100vh;
+            height: -webkit-fill-available;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             overflow: hidden;
         }
@@ -21,10 +22,16 @@
         .chat-container {
             max-width: 100%;
             height: 100vh;
+            height: -webkit-fill-available;
             margin: 0 auto;
             background: white;
             display: flex;
             flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
 
         .chat-header {
@@ -92,6 +99,8 @@
             padding: 20px;
             overflow-y: auto;
             background: #E5DDD5;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 60px;
         }
 
         .message {
@@ -197,7 +206,11 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            position: relative;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
         }
 
         .reply-preview {
@@ -370,6 +383,38 @@
         var typingTimeout = null;
         var lastMessageTime = null;
         var replyingTo = null;
+
+        function adjustViewportHeight() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        // Call on initial load
+        adjustViewportHeight();
+
+        // Call on resize and orientation change
+        window.addEventListener('resize', adjustViewportHeight);
+        window.addEventListener('orientationchange', adjustViewportHeight);
+
+        // Handle keyboard events
+        window.visualViewport.addEventListener('resize', function() {
+            const chatBody = document.querySelector('.chat-body');
+            const chatFooter = document.querySelector('.chat-footer');
+            
+            // Adjust the chat body padding when keyboard is open
+            if (window.visualViewport.height < window.innerHeight) {
+                // Keyboard is open
+                chatBody.style.paddingBottom = '120px';
+                chatFooter.style.bottom = `${window.innerHeight - window.visualViewport.height}px`;
+            } else {
+                // Keyboard is closed
+                chatBody.style.paddingBottom = '60px';
+                chatFooter.style.bottom = '0';
+            }
+            
+            // Scroll to bottom when keyboard opens
+            scrollToBottom();
+        });
 
         // Load chat history when page loads
         window.onload = function() {
