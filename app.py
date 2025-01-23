@@ -40,16 +40,20 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username')
+        password = request.form.get('password')
         
         if username in VALID_CREDENTIALS and VALID_CREDENTIALS[username] == password:
             session['username'] = username
-            return redirect(url_for('home'))
-        else:
-            flash('Invalid username or password')
-    
+            return jsonify({'success': True})
+        return jsonify({'success': False})
     return render_template('login.html')
+
+@app.route('/chat')
+def chat():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('index.html')
 
 @app.route('/logout')
 def logout():
