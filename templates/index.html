@@ -19,12 +19,13 @@
             --message-sent: #E7FFDB;
             --message-received: #FFFFFF;
             --chat-background: #EBE5DE;
+            --footer-height: 70px;
             --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         body {
             height: 100vh;
-            height: -webkit-fill-available;
+            height: calc(var(--vh, 1vh) * 100);
             background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
             overflow: hidden;
             position: fixed;
@@ -35,7 +36,7 @@
         .chat-container {
             max-width: 100%;
             height: 100vh;
-            height: -webkit-fill-available;
+            height: calc(var(--vh, 1vh) * 100);
             margin: 0 auto;
             background: var(--chat-background);
             display: flex;
@@ -104,11 +105,13 @@
         .chat-body {
             flex: 1;
             padding: 16px;
+            padding-bottom: calc(var(--footer-height) + 20px);
             overflow-y: auto;
             background-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><rect width="20" height="20" fill="%23f0f0f0" opacity="0.1"/></svg>');
             -webkit-overflow-scrolling: touch;
             scroll-behavior: smooth;
-            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
 
         .chat-body::-webkit-scrollbar-thumb:hover {
@@ -167,7 +170,7 @@
 
         .chat-footer {
             background: #F8F9FA;
-            padding: 12px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -176,25 +179,68 @@
             left: 0;
             right: 0;
             z-index: 1000;
+            min-height: var(--footer-height);
             padding-bottom: calc(12px + var(--safe-area-inset-bottom));
             box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .input-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 24px;
+            padding: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .input-container:focus-within {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
         }
 
         .message-input {
             flex: 1;
-            padding: 12px 16px;
+            padding: 12px;
             border: none;
-            border-radius: 24px;
-            background: white;
+            background: transparent;
             font-size: 0.95em;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            line-height: 1.4;
+            max-height: 100px;
+            resize: none;
+            outline: none;
         }
 
-        .message-input:focus {
-            outline: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transform: translateY(-1px);
+        .message-input::placeholder {
+            color: #999;
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 8px;
+        }
+
+        .emoji-button {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: #666;
+            font-size: 1.4em;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .emoji-button:hover {
+            transform: rotate(10deg) scale(1.1);
+            color: var(--primary-color);
+            opacity: 1;
         }
 
         .send-button {
@@ -222,19 +268,8 @@
             background: var(--secondary-color);
         }
 
-        .emoji-button {
-            background: none;
-            border: none;
-            padding: 8px;
-            cursor: pointer;
-            color: #666;
-            font-size: 1.4em;
-            transition: all 0.3s ease;
-        }
-
-        .emoji-button:hover {
-            transform: rotate(10deg) scale(1.1);
-            color: var(--primary-color);
+        .send-button i {
+            font-size: 1.2em;
         }
 
         .typing-indicator {
@@ -363,23 +398,38 @@
         }
 
         @media (max-width: 768px) {
-            .chat-header {
-                padding: 10px;
-                min-height: 50px;
+            :root {
+                --footer-height: 60px;
             }
 
-            .user-avatar {
-                width: 35px;
-                height: 35px;
-                font-size: 16px;
+            .chat-body {
+                padding: 12px;
+                padding-bottom: calc(var(--footer-height) + 16px);
             }
 
-            .message {
-                max-width: 85%;
+            .chat-footer {
+                padding: 8px 12px;
             }
 
             .message-input {
-                padding: 10px 14px;
+                padding: 8px 12px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            .input-container {
+                margin: 0;
+            }
+
+            /* Prevent pull-to-refresh on mobile */
+            body {
+                overscroll-behavior-y: contain;
+            }
+        }
+
+        /* Fix for iPhone X and newer */
+        @supports (padding: max(0px)) {
+            .chat-footer {
+                padding-bottom: max(calc(12px + var(--safe-area-inset-bottom)), 20px);
             }
         }
     </style>
@@ -429,13 +479,23 @@
         </div>
 
         <div class="chat-footer">
-            <button class="emoji-button" onclick="toggleEmoji()">
-                <i class="far fa-smile"></i>
-            </button>
-            <input type="text" id="message" class="message-input" placeholder="Type a message..." autocomplete="off">
-            <button class="send-button" onclick="sendMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+            <div class="input-container">
+                <button class="emoji-button" onclick="toggleEmoji()">
+                    <i class="far fa-smile"></i>
+                </button>
+                <textarea 
+                    id="message" 
+                    class="message-input" 
+                    placeholder="Type a message..." 
+                    rows="1"
+                    onkeydown="if(event.keyCode == 13 && !event.shiftKey) { event.preventDefault(); sendMessage(); }"
+                ></textarea>
+                <div class="button-container">
+                    <button class="send-button" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -514,16 +574,27 @@
         }
 
         function sendMessage() {
-            var messageInput = document.getElementById('message');
-            if (messageInput.value) {
-                const messageData = {
-                    msg: messageInput.value,
-                    replyTo: replyingTo,
-                    id: Date.now()
-                };
-                socket.emit('message', messageData);
+            const messageInput = document.getElementById('message');
+            const sendButton = document.querySelector('.send-button');
+            const message = messageInput.value.trim();
+            
+            if (message) {
+                // Animate send button
+                sendButton.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    sendButton.style.transform = 'scale(1)';
+                }, 200);
+                
+                socket.emit('message', {
+                    msg: message
+                });
+                
+                // Reset input and its height
                 messageInput.value = '';
-                cancelReply();
+                messageInput.style.height = 'auto';
+                
+                // Scroll to bottom immediately for sent messages
+                smoothScrollToBottom(true);
             }
         }
 
@@ -667,12 +738,12 @@
         });
 
         // Improve scroll behavior
-        function smoothScrollToBottom() {
+        function smoothScrollToBottom(immediate = false) {
             const chatBody = document.querySelector('.chat-body');
-            const lastMessage = chatBody.lastElementChild;
-            if (lastMessage) {
-                lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }
+            chatBody.scrollTo({
+                top: chatBody.scrollHeight,
+                behavior: immediate ? 'auto' : 'smooth'
+            });
         }
 
         // Enhanced keyboard handling
@@ -700,24 +771,12 @@
             event.target.click();
         }, false);
 
-        // Add animation when sending message
-        function sendMessage() {
-            const messageInput = document.getElementById('message');
-            const sendButton = document.querySelector('.send-button');
-            
-            if (messageInput.value.trim()) {
-                sendButton.style.transform = 'scale(0.8)';
-                setTimeout(() => {
-                    sendButton.style.transform = 'scale(1)';
-                }, 200);
-                
-                socket.emit('message', {
-                    msg: messageInput.value
-                });
-                
-                messageInput.value = '';
-            }
-        }
+        // Auto-resize textarea
+        const messageInput = document.getElementById('message');
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
     </script>
 </body>
 </html>
