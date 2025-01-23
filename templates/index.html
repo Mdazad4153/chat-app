@@ -322,6 +322,162 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Mobile-first styles */
+        @media screen and (max-width: 768px) {
+            .chat-header {
+                padding: 10px;
+                background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+            }
+
+            .user-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+
+            .current-user {
+                font-size: 0.85em;
+                padding: 4px 8px;
+            }
+
+            .chat-body {
+                padding: 12px;
+            }
+
+            .message {
+                max-width: 85%;
+                margin-bottom: 12px;
+            }
+
+            .message-content {
+                padding: 8px 12px;
+                font-size: 0.95em;
+                border-radius: 12px;
+            }
+
+            .sent .message-content {
+                background: linear-gradient(135deg, #DCF8C6 0%, #c5f0a6 100%);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+
+            .received .message-content {
+                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+
+            .chat-footer {
+                padding: 10px;
+                background: #f8f9fa;
+                box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
+            }
+
+            .message-input {
+                padding: 8px 12px;
+                border-radius: 20px;
+                font-size: 0.95em;
+                background: white;
+                border: 1px solid #e0e0e0;
+            }
+
+            .send-button {
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                background: #128C7E;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+
+            .emoji-button {
+                width: 35px;
+                height: 35px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2em;
+            }
+
+            .message-time {
+                font-size: 0.65em;
+                margin-top: 3px;
+                color: #666;
+            }
+
+            .username {
+                font-size: 0.75em;
+                margin-bottom: 3px;
+            }
+
+            /* Improved scrollbar for mobile */
+            .chat-body::-webkit-scrollbar {
+                width: 3px;
+            }
+
+            .chat-body::-webkit-scrollbar-thumb {
+                background-color: rgba(0,0,0,0.2);
+                border-radius: 3px;
+            }
+
+            /* Improved typing indicator */
+            .typing-indicator {
+                font-size: 0.8em;
+                color: #666;
+                padding: 5px 10px;
+                background: rgba(255,255,255,0.8);
+                border-radius: 12px;
+                margin-bottom: 8px;
+            }
+
+            /* Improved reply preview */
+            .reply-preview {
+                margin-bottom: 8px;
+                padding: 8px;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.9);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+
+            /* Add smooth transitions */
+            .message-content, .send-button, .emoji-button {
+                transition: all 0.2s ease;
+            }
+
+            .send-button:active, .emoji-button:active {
+                transform: scale(0.95);
+            }
+
+            /* Improved message actions */
+            .message-actions {
+                padding: 4px 8px;
+                border-radius: 12px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .message-actions button {
+                padding: 3px 6px;
+                font-size: 0.75em;
+            }
+        }
+
+        /* Add active states for better touch feedback */
+        @media (hover: none) {
+            .message-content:active {
+                opacity: 0.8;
+            }
+
+            .send-button:active {
+                background: #0c6b5e;
+            }
+
+            .emoji-button:active {
+                background: rgba(0,0,0,0.1);
+            }
+        }
     </style>
 </head>
 <body>
