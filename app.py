@@ -17,7 +17,7 @@ USERS = {
 
 # Track online users and their last seen
 online_users = {}
-user_typing_status = {}
+user_last_seen = {}
 
 # Initialize database
 def init_db():
@@ -30,6 +30,12 @@ def init_db():
                   content TEXT NOT NULL,
                   timestamp TEXT NOT NULL,
                   is_read INTEGER DEFAULT 0)''')
+    
+    # Add user_status table
+    c.execute('''CREATE TABLE IF NOT EXISTS user_status
+                 (username TEXT PRIMARY KEY,
+                  last_seen TEXT NOT NULL,
+                  is_online INTEGER DEFAULT 0)''')
     conn.commit()
     conn.close()
 
@@ -117,44 +123,31 @@ def get_chat_history():
     conn.close()
     return jsonify(messages)
 
-@app.route('/get_user_status')
-def get_user_status():
-    if 'username' not in session:
-        return jsonify({'error': 'Not logged in'})
+@app.route('/get_user_status/<username>')
+def get_user_status(username):
+    if username not in USERS:
+        return jsonify({'error': 'User not found'}), 404
     
-    username = session['username']
-    other_user = 'Sanya' if username == 'Abhi' else 'Abhi'
+    is_online = username in online_users
+    last_seen = user_last_seen.get(username, 'Never')
     
-    status = {
-        'username': other_user,
-        'status': 'offline',
-        'last_seen': None,
-        'isTyping': user_typing_status.get(other_user, False)
-    }
-    
-    if other_user in online_users:
-        status['status'] = online_users[other_user]['status']
-        if status['status'] == 'offline':
-            status['last_seen'] = online_users[other_user]['last_seen']
-    
-    return jsonify(status)
+    return jsonify({
+        'is_online': is_online,
+        'last_seen': last_seen
+    })
 
 @socketio.on('connect')
 def handle_connect():
     if 'username' in session:
         username = session['username']
-        online_users[username] = {
-            'status': 'online',
-            'last_seen': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        emit('user_status_change', {
+        online_users[username] = request.sid
+        user_last_seen[username] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Broadcast user online status to all clients
+        emit('user_status', {
             'username': username,
             'status': 'online',
-            'last_seen': None
-        }, broadcast=True)
-        emit('message', {
-            'msg': f"{session['username']} joined the chat",
-            'system': True
+            'last_seen': user_last_seen[username]
         }, broadcast=True)
 
 @socketio.on('disconnect')
@@ -162,41 +155,15 @@ def handle_disconnect():
     if 'username' in session:
         username = session['username']
         if username in online_users:
-            online_users[username]['status'] = 'offline'
-            online_users[username]['last_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            emit('user_status_change', {
-                'username': username,
-                'status': 'offline',
-                'last_seen': online_users[username]['last_seen']
-            }, broadcast=True)
-        emit('message', {
-            'msg': f"{session['username']} left the chat",
-            'system': True
-        }, broadcast=True)
-
-@socketio.on('typing')
-def handle_typing(data):
-    if 'username' in session:
-        username = session['username']
-        user_typing_status[username] = True
-        emit('typing_status', {
+            del online_users[username]
+        user_last_seen[username] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Broadcast user offline status to all clients
+        emit('user_status', {
             'username': username,
-            'isTyping': True
+            'status': 'offline',
+            'last_seen': user_last_seen[username]
         }, broadcast=True)
-        emit('typing', {
-            'username': session.get('username')
-        }, broadcast=True, include_self=False)
-
-@socketio.on('stop_typing')
-def handle_stop_typing():
-    if 'username' in session:
-        username = session['username']
-        user_typing_status[username] = False
-        emit('typing_status', {
-            'username': username,
-            'isTyping': False
-        }, broadcast=True)
-        emit('stop_typing', broadcast=True, include_self=False)
 
 @socketio.on('message')
 def handle_message(data):
@@ -228,6 +195,16 @@ def handle_message(data):
         
         # Broadcast message
         emit('message', message_data, broadcast=True)
+
+@socketio.on('typing')
+def handle_typing(data):
+    emit('typing', {
+        'username': session.get('username')
+    }, broadcast=True, include_self=False)
+
+@socketio.on('stop_typing')
+def handle_stop_typing():
+    emit('stop_typing', broadcast=True, include_self=False)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

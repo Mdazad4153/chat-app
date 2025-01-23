@@ -50,36 +50,49 @@
             flex: 1;
         }
 
+        .user-name {
+            display: flex;
+            align-items: center;
+        }
+
         .user-status {
             font-size: 12px;
             opacity: 0.9;
             margin-top: 2px;
         }
 
-        .typing-indicator {
-            font-size: 12px;
-            font-style: italic;
-            color: #E2E2E2;
-            margin-top: 2px;
-            display: none;
-        }
-
         .online-dot {
             width: 8px;
             height: 8px;
-            background: #25D366;
             border-radius: 50%;
             display: inline-block;
             margin-right: 5px;
+            vertical-align: middle;
         }
 
-        .offline-dot {
-            width: 8px;
-            height: 8px;
-            background: #808080;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
+        .online-dot.online {
+            background: #25D366;
+        }
+
+        .online-dot.offline {
+            background: #bbb;
+        }
+
+        .current-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .current-user .user-avatar {
+            width: 30px;
+            height: 30px;
+            margin: 0;
+            font-size: 16px;
         }
 
         .user-avatar {
@@ -93,16 +106,6 @@
             justify-content: center;
             font-size: 20px;
             color: #128C7E;
-        }
-
-        .user-name {
-            display: flex;
-            align-items: center;
-        }
-
-        .other-user-name {
-            font-size: 16px;
-            font-weight: bold;
         }
 
         .chat-body {
@@ -340,11 +343,10 @@
         <div class="chat-header">
             <div class="user-info">
                 <div class="user-name">
-                    <span class="status-dot offline-dot"></span>
-                    <span class="other-user-name"></span>
+                    <span class="online-dot offline" id="status-dot"></span>
+                    <span id="chat-with">Loading...</span>
                 </div>
-                <div class="user-status">offline</div>
-                <div class="typing-indicator">typing...</div>
+                <div class="user-status" id="last-seen">Last seen: ...</div>
             </div>
             <div class="chat-buttons">
                 <div class="current-user">
@@ -387,91 +389,41 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         var socket = io();
-        var messageInput = document.getElementById('message');
         var typingTimeout = null;
         var lastMessageTime = null;
         var replyingTo = null;
+        var otherUser = '{{ "Sanya" if session.username == "Abhi" else "Abhi" }}';
 
-        // Function to update user status in the UI
-        function updateUserStatus(data) {
-            const statusDot = document.querySelector('.status-dot');
-            const userStatus = document.querySelector('.user-status');
+        function adjustViewportHeight() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        // Call on initial load
+        adjustViewportHeight();
+
+        // Call on resize and orientation change
+        window.addEventListener('resize', adjustViewportHeight);
+        window.addEventListener('orientationchange', adjustViewportHeight);
+
+        // Handle keyboard events
+        window.visualViewport.addEventListener('resize', function() {
+            const chatBody = document.querySelector('.chat-body');
+            const chatFooter = document.querySelector('.chat-footer');
             
-            if (data.status === 'online') {
-                statusDot.className = 'status-dot online-dot';
-                userStatus.textContent = 'online';
+            // Adjust the chat body padding when keyboard is open
+            if (window.visualViewport.height < window.innerHeight) {
+                // Keyboard is open
+                chatBody.style.paddingBottom = '120px';
+                chatFooter.style.bottom = `${window.innerHeight - window.visualViewport.height}px`;
             } else {
-                statusDot.className = 'status-dot offline-dot';
-                if (data.last_seen) {
-                    const lastSeen = new Date(data.last_seen);
-                    const now = new Date();
-                    const diffMinutes = Math.floor((now - lastSeen) / 60000);
-                    
-                    if (diffMinutes < 1) {
-                        userStatus.textContent = 'last seen just now';
-                    } else if (diffMinutes < 60) {
-                        userStatus.textContent = `last seen ${diffMinutes} minutes ago`;
-                    } else {
-                        const hours = Math.floor(diffMinutes / 60);
-                        if (hours < 24) {
-                            userStatus.textContent = `last seen ${hours} hours ago`;
-                        } else {
-                            userStatus.textContent = `last seen ${lastSeen.toLocaleDateString()}`;
-                        }
-                    }
-                } else {
-                    userStatus.textContent = 'offline';
-                }
-            }
-        }
-
-        // Function to update typing status
-        function updateTypingStatus(data) {
-            const typingIndicator = document.querySelector('.typing-indicator');
-            if (data.isTyping) {
-                typingIndicator.style.display = 'block';
-            } else {
-                typingIndicator.style.display = 'none';
-            }
-        }
-
-        // Poll for user status
-        function pollUserStatus() {
-            fetch('/get_user_status')
-                .then(response => response.json())
-                .then(data => {
-                    updateUserStatus(data);
-                    updateTypingStatus(data);
-                    // Set other user's name
-                    document.querySelector('.other-user-name').textContent = data.username;
-                });
-        }
-
-        // Poll every 30 seconds
-        setInterval(pollUserStatus, 30000);
-        // Initial poll
-        pollUserStatus();
-
-        // Socket events for status updates
-        socket.on('user_status_change', function(data) {
-            updateUserStatus(data);
-        });
-
-        socket.on('typing_status', function(data) {
-            updateTypingStatus(data);
-        });
-
-        // Typing indicator logic
-        messageInput.addEventListener('input', function() {
-            if (!typingTimeout) {
-                socket.emit('typing');
+                // Keyboard is closed
+                chatBody.style.paddingBottom = '60px';
+                chatFooter.style.bottom = '0';
             }
             
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(function() {
-                socket.emit('stop_typing');
-                typingTimeout = null;
-            }, 2000);
+            // Scroll to bottom when keyboard opens
+            scrollToBottom();
         });
 
         // Load chat history when page loads
@@ -629,6 +581,52 @@
             const messages = document.getElementById('messages');
             messages.scrollTop = messages.scrollHeight;
         }
+
+        function updateUserStatus(data) {
+            const statusDot = document.getElementById('status-dot');
+            const lastSeen = document.getElementById('last-seen');
+            
+            if (data.username === otherUser) {
+                statusDot.className = `online-dot ${data.status}`;
+                if (data.status === 'online') {
+                    lastSeen.textContent = 'Online';
+                } else {
+                    const lastSeenTime = new Date(data.last_seen);
+                    const now = new Date();
+                    const diffMinutes = Math.floor((now - lastSeenTime) / 60000);
+                    
+                    if (diffMinutes < 1) {
+                        lastSeen.textContent = 'Last seen: just now';
+                    } else if (diffMinutes < 60) {
+                        lastSeen.textContent = `Last seen: ${diffMinutes} minutes ago`;
+                    } else if (diffMinutes < 1440) {
+                        const hours = Math.floor(diffMinutes / 60);
+                        lastSeen.textContent = `Last seen: ${hours} hours ago`;
+                    } else {
+                        lastSeen.textContent = `Last seen: ${lastSeenTime.toLocaleDateString()}`;
+                    }
+                }
+            }
+        }
+
+        // Update chat header with other user's name
+        document.getElementById('chat-with').textContent = otherUser;
+
+        // Listen for user status updates
+        socket.on('user_status', function(data) {
+            updateUserStatus(data);
+        });
+
+        // Get initial user status
+        fetch(`/get_user_status/${otherUser}`)
+            .then(response => response.json())
+            .then(data => {
+                updateUserStatus({
+                    username: otherUser,
+                    status: data.is_online ? 'online' : 'offline',
+                    last_seen: data.last_seen
+                });
+            });
 
         document.getElementById('message').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
