@@ -9,10 +9,10 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
 socketio = SocketIO(app)
 
-# Fixed users
-USERS = {
-    'Abhi': '415341',
-    'Sanya': '841401'
+# User credentials
+VALID_CREDENTIALS = {
+    'Abhi': '1234',
+    'Sanya': '5678'
 }
 
 # Initialize database
@@ -43,7 +43,7 @@ def login():
         username = request.form['username']
         password = request.form['password']
         
-        if username in USERS and USERS[username] == password:
+        if username in VALID_CREDENTIALS and VALID_CREDENTIALS[username] == password:
             session['username'] = username
             return redirect(url_for('home'))
         else:
@@ -116,9 +116,12 @@ def get_chat_history():
 @app.route('/set_username', methods=['POST'])
 def set_username():
     username = request.form.get('username')
-    if username:
-        session['username'] = username
-        return jsonify({'success': True})
+    password = request.form.get('password')
+    
+    if username and password:
+        if username in VALID_CREDENTIALS and VALID_CREDENTIALS[username] == password:
+            session['username'] = username
+            return jsonify({'success': True})
     return jsonify({'success': False})
 
 @socketio.on('connect')
