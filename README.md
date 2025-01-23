@@ -1,27 +1,23 @@
 # Real-Time Chat Application
 
-A modern real-time chat application built with Flask and Socket.IO, featuring a WhatsApp-like interface.
+A modern, WhatsApp-style chat application built with Flask and Socket.IO that enables real-time messaging between two users.
 
 ## Features
 
-- Real-time messaging with WebSocket support
-- Message history and offline message storage
-- Reply to specific messages
-- Typing indicators
-- User online status
-- Mobile-responsive design
-- WhatsApp-style UI
-- Message read status
+- 💬 Real-time messaging with WebSocket support
+- 👤 Two-user system (Abhi and Sanya)
+- 📱 Mobile-responsive WhatsApp-style UI
+- 💾 Message history with SQLite database
+- 🔔 Unread message notifications
+- ⌨️ Typing indicators
+- ↩️ Message reply functionality
+- 🎨 Modern UI with animations
 
-## Users
-- **Abhi** (password: 415341)
-- **Sanya** (password: 841401)
-
-## Setup
+## Installation
 
 1. Clone the repository:
 ```bash
-git clone [your-repo-url]
+git clone <your-repo-url>
 cd chat-app
 ```
 
@@ -35,19 +31,56 @@ pip install -r requirements.txt
 python app.py
 ```
 
-4. Open `http://localhost:5000` in your browser
+4. Open http://localhost:5000 in your browser
+
+## Login Credentials
+
+- User 1:
+  - Username: Abhi
+  - Password: 415341
+
+- User 2:
+  - Username: Sanya
+  - Password: 841401
 
 ## Technologies Used
 
-- Flask
-- Socket.IO
-- SQLite
-- HTML/CSS
-- JavaScript
+- Backend:
+  - Flask
+  - Flask-SocketIO
+  - SQLite
+  - Python
 
-## Screenshots
+- Frontend:
+  - HTML5
+  - CSS3
+  - JavaScript
+  - Socket.IO Client
+  - Font Awesome Icons
 
-- Modern WhatsApp-like interface
-- Real-time message delivery
-- Message replies and history
-- Mobile-responsive design
+## Features in Detail
+
+1. **Real-Time Messaging**
+   - Instant message delivery
+   - Typing indicators
+   - Online status
+
+2. **Message History**
+   - Persistent storage in SQLite
+   - Load previous messages
+   - Unread message tracking
+
+3. **Reply System**
+   - Reply to specific messages
+   - Click to view original message
+   - Highlighted replies
+
+4. **Modern UI**
+   - WhatsApp-inspired design
+   - Responsive layout
+   - Smooth animations
+   - Emoji support
+
+## License
+
+MIT License
