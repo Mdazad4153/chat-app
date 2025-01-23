@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+        }
+
+        .chat-container {
+            max-width: 100%;
+            height: 100vh;
+            margin: 0 auto;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: #128C7E;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .current-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .current-user .user-avatar {
+            width: 30px;
+            height: 30px;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #fff;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #128C7E;
+        }
+
+        .user-status {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #25D366;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #E5DDD5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            max-width: 90%;
+            position: relative;
+        }
+
+        .message.sent {
+            margin-left: auto;
+        }
+
+        .message.received {
+            margin-right: auto;
+        }
+
+        .message.replying {
+            margin-bottom: 5px;
+        }
+
+        .message.highlight {
+            animation: highlight 2s ease-in-out;
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); background: rgba(18, 140, 126, 0.1); }
+            100% { transform: scale(1); }
+        }
+
+        .reply-box {
+            font-size: 0.8em;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            margin-bottom: 5px;
+            border-left: 3px solid #128C7E;
+            cursor: pointer;
+        }
+
+        .reply-box:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .message-content {
+            padding: 10px 15px;
+            border-radius: 10px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .sent .message-content {
+            background: #DCF8C6;
+            color: black;
+        }
+
+        .received .message-content {
+            background: white;
+            color: black;
+        }
+
+        .username {
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #128C7E;
+        }
+
+        .message-time {
+            font-size: 0.7em;
+            color: #999;
+            margin-top: 5px;
+            float: right;
+        }
+
+        .message-actions {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: -20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            padding: 3px 8px;
+        }
+
+        .message:hover .message-actions {
+            display: block;
+        }
+
+        .message-actions button {
+            border: none;
+            background: none;
+            color: #128C7E;
+            cursor: pointer;
+            padding: 2px 5px;
+            font-size: 0.8em;
+        }
+
+        .chat-footer {
+            padding: 15px;
+            background: #F0F0F0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .reply-preview {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            display: none;
+        }
+
+        .reply-preview.active {
+            display: block;
+        }
+
+        .reply-preview .close-reply {
+            float: right;
+            border: none;
+            background: none;
+            color: #999;
+            cursor: pointer;
+        }
+
+        #message {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 20px;
+            background: white;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .chat-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-buttons button {
+            border: none;
+            background: none;
+            color: #128C7E;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .chat-buttons button:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        #typingIndicator {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            color: #666;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots::after {
+            content: '';
+            animation: typing 1.5s infinite;
+        }
+
+        @keyframes typing {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+            100% { content: ''; }
+        }
+
+        .system-message {
+            text-align: center;
+            margin: 10px 0;
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        @media (min-width: 768px) {
+            .chat-container {
+                max-width: 800px;
+                height: 90vh;
+                margin: 5vh auto;
+                border-radius: 10px;
+                overflow: hidden;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <h3>{% if session['username'] == 'Abhi' %}Sanya{% else %}Abhi{% endif %}</h3>
+                    <div class="user-status">
+                        <span class="online-dot"></span>
+                        Online
+                    </div>
+                </div>
+            </div>
+            <div class="chat-buttons">
+                <div class="current-user">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span>{{ session['username'] }}</span>
+                </div>
+                <a href="/logout" style="color: white; text-decoration: none; margin-left: 10px;">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="chat-body" id="messages"></div>
+
+        <div id="typingIndicator">
+            <span class="typing-username"></span>
+            <span class="typing-dots"></span>
+        </div>
+
+        <div class="reply-preview" id="replyPreview">
+            <button class="close-reply" onclick="cancelReply()">×</button>
+            <div class="reply-content"></div>
+        </div>
+
+        <div class="chat-footer">
+            <input type="text" id="message" placeholder="Type a message..." autocomplete="off">
+            <div class="chat-buttons">
+                <button onclick="toggleEmoji()">
+                    <i class="far fa-smile"></i>
+                </button>
+                <button onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        var socket = io();
+        var typingTimeout = null;
+        var lastMessageTime = null;
+        var replyingTo = null;
+
+        // Load chat history when page loads
+        window.onload = function() {
+            loadChatHistory();
+            loadUnreadMessages();
+        };
+
+        function loadChatHistory() {
+            fetch('/get_chat_history')
+                .then(response => response.json())
+                .then(messages => {
+                    messages.forEach(data => {
+                        displayMessage(data);
+                    });
+                    scrollToBottom();
+                });
+        }
+
+        function loadUnreadMessages() {
+            fetch('/get_unread_messages')
+                .then(response => response.json())
+                .then(messages => {
+                    if (messages.length > 0) {
+                        const notification = document.createElement('div');
+                        notification.className = 'system-message';
+                        notification.textContent = `You have ${messages.length} unread message(s)`;
+                        document.getElementById('messages').appendChild(notification);
+                        
+                        messages.forEach(data => {
+                            displayMessage(data);
+                        });
+                        scrollToBottom();
+                    }
+                });
+        }
+
+        function sendMessage() {
+            var messageInput = document.getElementById('message');
+            if (messageInput.value) {
+                const messageData = {
+                    msg: messageInput.value,
+                    replyTo: replyingTo,
+                    id: Date.now()
+                };
+                socket.emit('message', messageData);
+                messageInput.value = '';
+                cancelReply();
+            }
+        }
+
+        function replyToMessage(messageId, content, sender) {
+            replyingTo = {
+                id: messageId,
+                content: content,
+                sender: sender
+            };
+            
+            const replyPreview = document.getElementById('replyPreview');
+            const replyContent = replyPreview.querySelector('.reply-content');
+            replyContent.textContent = `Replying to ${sender}: ${content}`;
+            replyPreview.classList.add('active');
+            
+            document.getElementById('message').focus();
+        }
+
+        function cancelReply() {
+            replyingTo = null;
+            const replyPreview = document.getElementById('replyPreview');
+            replyPreview.classList.remove('active');
+        }
+
+        function displayMessage(data) {
+            var messages = document.getElementById('messages');
+            var messageDiv = document.createElement('div');
+            
+            if (data.system) {
+                messageDiv.className = 'system-message';
+                messageDiv.textContent = data.msg;
+            } else {
+                messageDiv.className = 'message ' + 
+                    (data.username === '{{ session["username"] }}' ? 'sent' : 'received');
+                messageDiv.setAttribute('data-message-id', data.id || Date.now());
+                
+                var content = document.createElement('div');
+                content.className = 'message-content';
+                
+                if (data.replyTo) {
+                    var replyBox = document.createElement('div');
+                    replyBox.className = 'reply-box';
+                    replyBox.textContent = `${data.replyTo.sender}: ${data.replyTo.content}`;
+                    replyBox.onclick = function() {
+                        highlightOriginalMessage(data.replyTo.id);
+                    };
+                    content.appendChild(replyBox);
+                }
+
+                var username = document.createElement('div');
+                username.className = 'username';
+                username.textContent = data.username;
+                
+                var text = document.createElement('div');
+                text.textContent = data.msg;
+                
+                var time = document.createElement('div');
+                time.className = 'message-time';
+                time.textContent = data.timestamp || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                var actions = document.createElement('div');
+                actions.className = 'message-actions';
+                actions.innerHTML = `
+                    <button onclick="replyToMessage('${data.id || Date.now()}', '${data.msg}', '${data.username}')">
+                        <i class="fas fa-reply"></i> Reply
+                    </button>
+                `;
+                
+                content.appendChild(username);
+                content.appendChild(text);
+                content.appendChild(time);
+                messageDiv.appendChild(content);
+                messageDiv.appendChild(actions);
+
+                if (lastMessageTime) {
+                    const currentDate = new Date().toLocaleDateString();
+                    const lastDate = new Date(lastMessageTime).toLocaleDateString();
+                    if (currentDate !== lastDate) {
+                        const dateSeparator = document.createElement('div');
+                        dateSeparator.className = 'date-separator';
+                        dateSeparator.textContent = currentDate;
+                        messages.appendChild(dateSeparator);
+                    }
+                }
+                lastMessageTime = new Date();
+            }
+            
+            messages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function highlightOriginalMessage(messageId) {
+            // Remove highlight from all messages
+            document.querySelectorAll('.message.highlight').forEach(msg => {
+                msg.classList.remove('highlight');
+            });
+
+            // Find and highlight the original message
+            const originalMessage = document.querySelector(`.message[data-message-id="${messageId}"]`);
+            if (originalMessage) {
+                originalMessage.classList.add('highlight');
+                originalMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function scrollToBottom() {
+            const messages = document.getElementById('messages');
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        document.getElementById('message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+            socket.emit('typing');
+            
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+            
+            typingTimeout = setTimeout(() => {
+                socket.emit('stop_typing');
+            }, 1000);
+        });
+
+        socket.on('message', function(data) {
+            displayMessage(data);
+            document.getElementById('typingIndicator').style.display = 'none';
+        });
+
+        socket.on('typing', function(data) {
+            if (data.username !== '{{ session["username"] }}') {
+                const typingIndicator = document.getElementById('typingIndicator');
+                const usernameSpan = typingIndicator.querySelector('.typing-username');
+                usernameSpan.textContent = `${data.username} is typing`;
+                typingIndicator.style.display = 'block';
+            }
+        });
+
+        socket.on('stop_typing', function() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        });
+
+        function toggleEmoji() {
+            const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🌟', '💖', '🤗', '✨', '🎈', '😍', '🥰', '😘', '😋', '🤩'];
+            const messageInput = document.getElementById('message');
+            messageInput.value += emojis[Math.floor(Math.random() * emojis.length)];
+            messageInput.focus();
+        }
+
+        // Prevent bounce scrolling on iOS
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.chat-body')) return;
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
