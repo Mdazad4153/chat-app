@@ -113,6 +113,14 @@ def get_chat_history():
     conn.close()
     return jsonify(messages)
 
+@app.route('/set_username', methods=['POST'])
+def set_username():
+    username = request.form.get('username')
+    if username:
+        session['username'] = username
+        return jsonify({'success': True})
+    return jsonify({'success': False})
+
 @socketio.on('connect')
 def handle_connect():
     if 'username' in session:
